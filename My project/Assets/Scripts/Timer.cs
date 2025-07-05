@@ -19,7 +19,7 @@ public class Timer : MonoBehaviour
         {
             time += Time.deltaTime;
             text.text = string.Format("{0:F1}", time);
-            Debug.Log("[시간 재기 UI ]Time: " + time);
+            //Debug.Log("[시간 재기 UI ]Time: " + time);
         }
     }
 
