@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f647cc0545697264a9878224faada6d5, type: 3}
   m_Name: MetaQuestFeature Android
   m_EditorClassIdentifier: 
-  m_enabled: 0
+  m_enabled: 1
   nameUi: Meta Quest Support
   version: 1.0.0
   featureIdInternal: com.unity.openxr.feature.metaquest
@@ -370,25 +370,25 @@ MonoBehaviour:
   m_Name: Standalone
   m_EditorClassIdentifier: 
   features:
-  - {fileID: -139890413718270953}
-  - {fileID: 1604755234013236440}
   - {fileID: -6596427261014411227}
-  - {fileID: 4118454205179829738}
   - {fileID: -5444781738496044126}
+  - {fileID: 4118454205179829738}
+  - {fileID: 5990658442745251803}
   - {fileID: 4412412560741633399}
+  - {fileID: -322538999688657905}
+  - {fileID: -7463860417448150420}
+  - {fileID: -1913562723794740304}
+  - {fileID: -5170565772234642977}
+  - {fileID: 4296408496527853642}
+  - {fileID: 6710447194645759894}
   - {fileID: 9217349928660589836}
   - {fileID: -6414955355780195883}
-  - {fileID: -7463860417448150420}
-  - {fileID: 2748228478793111422}
-  - {fileID: -5170565772234642977}
-  - {fileID: -322538999688657905}
+  - {fileID: 1604755234013236440}
   - {fileID: 7593548781967157154}
-  - {fileID: 6710447194645759894}
-  - {fileID: 4296408496527853642}
   - {fileID: -6832448583737206315}
+  - {fileID: -139890413718270953}
+  - {fileID: 2748228478793111422}
   - {fileID: -4337926214725433113}
-  - {fileID: -1913562723794740304}
-  - {fileID: 5990658442745251803}
   m_renderMode: 1
   m_autoColorSubmissionMode: 1
   m_colorSubmissionModes:
@@ -735,23 +735,23 @@ MonoBehaviour:
   m_Name: Android
   m_EditorClassIdentifier: 
   features:
-  - {fileID: -1573052943592543046}
-  - {fileID: 4659045523448805015}
-  - {fileID: -7922074005444212699}
-  - {fileID: -9140102007736536897}
   - {fileID: 8497131404588870079}
-  - {fileID: -1738531942921530323}
   - {fileID: -9011938952566734276}
-  - {fileID: 4070754607982890779}
-  - {fileID: -799525746672549089}
-  - {fileID: 6353088492139468134}
-  - {fileID: -5543546988487363761}
-  - {fileID: 8565705509132917941}
-  - {fileID: 519074924779591536}
-  - {fileID: -5088041884940489928}
-  - {fileID: -7306315549841924924}
-  - {fileID: 7788312626880460387}
+  - {fileID: -1738531942921530323}
   - {fileID: -6326803057424790498}
+  - {fileID: 4070754607982890779}
+  - {fileID: -5543546988487363761}
+  - {fileID: 6353088492139468134}
+  - {fileID: -9140102007736536897}
+  - {fileID: -5088041884940489928}
+  - {fileID: 519074924779591536}
+  - {fileID: -799525746672549089}
+  - {fileID: -7922074005444212699}
+  - {fileID: 4659045523448805015}
+  - {fileID: 8565705509132917941}
+  - {fileID: -7306315549841924924}
+  - {fileID: -1573052943592543046}
+  - {fileID: 7788312626880460387}
   m_renderMode: 1
   m_autoColorSubmissionMode: 1
   m_colorSubmissionModes:
@@ -895,7 +895,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: feeef8d85de8db242bdda70cc7ff5acd, type: 3}
   m_Name: OculusTouchControllerProfile Android
   m_EditorClassIdentifier: 
-  m_enabled: 0
+  m_enabled: 1
   nameUi: Oculus Touch Controller Profile
   version: 0.0.1
   featureIdInternal: com.unity.openxr.feature.input.oculustouch
