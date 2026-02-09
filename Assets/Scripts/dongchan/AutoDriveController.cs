@@ -1,10 +1,10 @@
 // =============================================================================
-// 2. AutoDriveController.cs - 자동 운전 메인 컨트롤러
+// AutoReverseController.cs - X축 기반 자동 후진 컨트롤러
 // =============================================================================
 using UnityEngine;
 using System.Collections;
 
-public class AutoDriveController : MonoBehaviour
+public class AutoReverseController : MonoBehaviour
 {
     [Header("References")]
     public WaypointManager waypointManager;
@@ -16,6 +16,10 @@ public class AutoDriveController : MonoBehaviour
     public float turnSpeed = 5f;
     public float stoppingDistance = 2f;
     public float maxSpeed = 20f;
+    
+    [Header("Reverse Settings")]
+    public bool enableReverseMode = true;
+    public float reverseSpeedMultiplier = 0.8f; // 후진 속도 배율
     
     [Header("Detection Settings")]
     public float lookAheadDistance = 5f;
@@ -32,13 +36,19 @@ public class AutoDriveController : MonoBehaviour
     private bool isWaiting = false;
     private Vector3 targetPosition;
     private float targetSpeed;
+    private bool isReversing = false;
+    private Vector3 previousWaypointPosition;
     
     // 차량 제어를 위한 Rigidbody
     public Rigidbody carRigidbody;
     
     void Start()
     {
-        // Rigidbody 컴포넌트 찾
+        // Rigidbody 컴포넌트 찾기
+        if (carRigidbody == null)
+        {
+            carRigidbody = car.GetComponent<Rigidbody>();
+        }
         
         if (carRigidbody == null)
         {
@@ -84,6 +94,10 @@ public class AutoDriveController : MonoBehaviour
         
         currentWaypointIndex = 0;
         isMoving = true;
+        
+        // 첫 번째 웨이포인트를 이전 위치로 설정
+        previousWaypointPosition = waypointManager.waypoints[0].position;
+        
         SetCurrentTarget();
         
         Debug.Log("자동 운전 시작!");
@@ -139,14 +153,38 @@ public class AutoDriveController : MonoBehaviour
         // 회전 처리
         if (direction != Vector3.zero)
         {
-            Quaternion targetRotation = Quaternion.LookRotation(direction);
+            Quaternion targetRotation;
+            
+            if (isReversing)
+            {
+                // 후진 시: 목표 방향의 반대로 차량이 바라보도록 설정
+                targetRotation = Quaternion.LookRotation(-direction);
+            }
+            else
+            {
+                // 전진 시: 목표 방향으로 차량이 바라보도록 설정
+                targetRotation = Quaternion.LookRotation(direction);
+            }
+            
             car.rotation = Quaternion.Slerp(car.rotation, targetRotation, turnSpeed * Time.fixedDeltaTime);
         }
         
         // 이동 처리
         if (currentSpeed > 0.1f)
         {
-            Vector3 moveDirection = car.forward * currentSpeed;
+            Vector3 moveDirection;
+            
+            if (isReversing)
+            {
+                // 후진 시: 차량의 뒤쪽 방향으로 이동
+                moveDirection = -car.forward * currentSpeed;
+            }
+            else
+            {
+                // 전진 시: 차량의 앞쪽 방향으로 이동
+                moveDirection = car.forward * currentSpeed;
+            }
+            
             carRigidbody.linearVelocity = new Vector3(moveDirection.x, carRigidbody.linearVelocity.y, moveDirection.z);
         }
         else
@@ -161,6 +199,12 @@ public class AutoDriveController : MonoBehaviour
     {
         // 목표 속도에 따른 가속/감속
         float desiredSpeed = targetSpeed;
+        
+        // 후진 시 속도 조정
+        if (isReversing)
+        {
+            desiredSpeed *= reverseSpeedMultiplier;
+        }
         
         // 목표 지점 근처에서 감속
         if (distanceToTarget < stoppingDistance * 4f)
@@ -186,9 +230,9 @@ public class AutoDriveController : MonoBehaviour
     {
         if (!enableObstacleDetection) return false;
         
-        // 전방 장애물 감지
+        // 전방/후방 장애물 감지
         Vector3 rayOrigin = car.position + Vector3.up;
-        Vector3 rayDirection = car.forward;
+        Vector3 rayDirection = isReversing ? -car.forward : car.forward;
         
         if (Physics.Raycast(rayOrigin, rayDirection, lookAheadDistance, obstacleLayer))
         {
@@ -202,7 +246,7 @@ public class AutoDriveController : MonoBehaviour
     {
         var currentWaypoint = waypointManager.waypoints[currentWaypointIndex];
         
-        Debug.Log($"웨이포인트 {currentWaypointIndex} 도달!");
+        Debug.Log($"웨이포인트 {currentWaypointIndex} 도달! (후진: {isReversing})");
         
         // 대기 시간이 있으면 대기
         if (currentWaypoint.waitTime > 0f)
@@ -230,6 +274,12 @@ public class AutoDriveController : MonoBehaviour
     
     void MoveToNextWaypoint()
     {
+        // 현재 웨이포인트 위치를 이전 위치로 저장
+        if (currentWaypointIndex < waypointManager.waypoints.Count)
+        {
+            previousWaypointPosition = waypointManager.waypoints[currentWaypointIndex].position;
+        }
+        
         currentWaypointIndex++;
         
         // 경로 끝에 도달
@@ -238,6 +288,8 @@ public class AutoDriveController : MonoBehaviour
             if (waypointManager.loopPath)
             {
                 currentWaypointIndex = 0; // 처음으로 돌아가기
+                // 루프 시 마지막 웨이포인트를 이전 위치로 설정
+                previousWaypointPosition = waypointManager.waypoints[waypointManager.waypoints.Count - 1].position;
                 Debug.Log("경로 루프 - 처음 웨이포인트로 이동");
             }
             else
@@ -259,8 +311,26 @@ public class AutoDriveController : MonoBehaviour
             targetPosition = waypoint.position;
             targetSpeed = waypoint.speed;
             
-            Debug.Log($"새 목표: 웨이포인트 {currentWaypointIndex}, 속도: {targetSpeed}");
+            // X축 기반 후진 조건 확인
+            CheckReverseCondition();
+            
+            Debug.Log($"새 목표: 웨이포인트 {currentWaypointIndex}, 속도: {targetSpeed}, 후진: {isReversing}");
+            Debug.Log($"현재 X: {targetPosition.x}, 이전 X: {previousWaypointPosition.x}");
         }
+    }
+    
+    void CheckReverseCondition()
+    {
+        if (!enableReverseMode) 
+        {
+            isReversing = false;
+            return;
+        }
+        
+        // X축 위치 비교: 현재 목표 웨이포인트의 X축이 이전 웨이포인트보다 작으면 후진
+        isReversing = targetPosition.x >= previousWaypointPosition.x;
+        
+        Debug.Log($"후진 조건 확인: 목표 X({targetPosition.x}) < 이전 X({previousWaypointPosition.x}) = {isReversing}");
     }
     
     void OnDrawGizmos()
@@ -275,17 +345,39 @@ public class AutoDriveController : MonoBehaviour
         Gizmos.color = Color.blue;
         Gizmos.DrawLine(car.position, targetPosition);
         
+        // 이전 웨이포인트 표시
+        Gizmos.color = Color.yellow;
+        Gizmos.DrawWireSphere(previousWaypointPosition, 0.8f);
+        
         // 장애물 감지 레이
         if (enableObstacleDetection)
         {
             Gizmos.color = Color.red;
             Vector3 rayOrigin = car.position + Vector3.up;
-            Gizmos.DrawRay(rayOrigin, car.forward * lookAheadDistance);
+            Vector3 rayDirection = isReversing ? -car.forward : car.forward;
+            Gizmos.DrawRay(rayOrigin, rayDirection * lookAheadDistance);
         }
         
-        // 현재 속도 표시
-        Gizmos.color = Color.cyan;
-        Vector3 speedVector = car.forward * currentSpeed;
+        // 현재 속도 표시 (후진 시 다른 색상)
+        Gizmos.color = isReversing ? Color.magenta : Color.cyan;
+        Vector3 speedVector = isReversing ? -car.forward * currentSpeed : car.forward * currentSpeed;
         Gizmos.DrawRay(car.position, speedVector);
+        
+        // 후진 상태 표시
+        if (isReversing)
+        {
+            Gizmos.color = Color.red;
+            Gizmos.DrawWireCube(car.position + Vector3.up * 2f, Vector3.one * 0.5f);
+        }
+        
+        // X축 정보 표시
+        Gizmos.color = Color.white;
+        Vector3 textPos = car.position + Vector3.up * 3f;
+        
+        // Unity Editor에서만 텍스트 표시 (Gizmos는 텍스트 지원 안함)
+        #if UNITY_EDITOR
+        UnityEditor.Handles.color = Color.white;
+        UnityEditor.Handles.Label(textPos, $"X: {targetPosition.x:F1} | Prev X: {previousWaypointPosition.x:F1} | Reverse: {isReversing}");
+        #endif
     }
 }

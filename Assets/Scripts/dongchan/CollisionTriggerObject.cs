@@ -32,6 +32,8 @@ public class CollisionTriggerObject : MonoBehaviour
     private Renderer objectRenderer;
     private AudioSource audioSource;
     private Collider objectCollider;
+
+    public GameObject firstQuiz;
     
     void Start()
     {
@@ -93,27 +95,29 @@ public class CollisionTriggerObject : MonoBehaviour
     void TriggerEffect(GameObject triggerObject)
     {
         if (hasTriggered && triggerOnce) return;
-        
+
         hasTriggered = true;
-        
+
+        firstQuiz.SetActive(true);
+
         Debug.Log($"{gameObject.name} 트리거 발생! 충돌 대상: {triggerObject.name}");
-        
+
         // 이벤트 발생
         onTriggerActivated?.Invoke();
         onTriggerWithName?.Invoke(triggerName);
-        
+
         // 파티클 효과
         if (createParticles)
         {
             CreateParticleEffect();
         }
-        
+
         // 사운드 재생
         if (playSound && audioSource != null && triggerSound != null)
         {
             audioSource.PlayOneShot(triggerSound);
         }
-        
+
         // 오브젝트 제거
         if (fadeOut)
         {
@@ -123,8 +127,39 @@ public class CollisionTriggerObject : MonoBehaviour
         {
             DestroyObject();
         }
+        //if (hasTriggered && triggerOnce) return;
+
+        //hasTriggered = true;
+
+        ////  Canvas가 이미 하나라도 열려있으면 아무것도 하지 않음
+        //if (CanvasAlreadyOpen()) return;
+
+        ////  연결된 퀴즈만 활성화
+        //if (firstQuiz != null)
+        //{
+        //    firstQuiz.SetActive(true);
+        //}
+
+        //Debug.Log($"{gameObject.name} 트리거 발생! 충돌 대상: {triggerObject.name}");
+
+        //onTriggerActivated?.Invoke();
+        //onTriggerWithName?.Invoke(triggerName);
+
+        //if (createParticles) CreateParticleEffect();
+        //if (playSound && audioSource != null && triggerSound != null) audioSource.PlayOneShot(triggerSound);
+
+        //if (fadeOut) StartCoroutine(FadeOutAndDestroy());
+        //else DestroyObject();
+
     }
-    
+
+    bool CanvasAlreadyOpen()
+    {
+        return GameObject.Find("QuizCanvas1")?.activeSelf == true ||
+               GameObject.Find("QuizCanvas2")?.activeSelf == true ||
+               GameObject.Find("QuizCanvas3")?.activeSelf == true;
+    }
+
     void CreateParticleEffect()
     {
         // 프리팹 파티클 생성
